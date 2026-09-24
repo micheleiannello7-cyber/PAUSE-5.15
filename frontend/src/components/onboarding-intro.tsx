@@ -9,12 +9,12 @@ import { useI18n } from "@/src/i18n";
 import { typography } from "@/src/theme";
 import { OnboardingBrand } from "@/src/components/onboarding-brand";
 
-// Newly generated clean artwork in managed image storage, not an enlarged
-// screenshot. The logo, wordmark, copy and button are all drawn separately.
-const ARTWORK = "https://static.prod-images.emergentagent.com/jobs/28e12fec-acaf-4031-be76-8ab73ac62f06/images/bf742891c8e2291fe83007a503faab16afa32a336fa2dff4e37d8958ff1c358b.jpeg";
+// Sfondo notturno cinematografico (dark navy) generato per PAUSE e incluso
+// nell'app: si integra con la UI scura grazie ai veli/gradienti sopra.
+const ARTWORK = require("../../assets/images/intro-night.jpg");
 
 // Fixed brand colours: this reference must look identical in both app themes.
-const INK = "#020916";
+const INK = "#030814";
 const WHITE = "#F8FAFF";
 const DISCOVERY = ["#19D9FA", "#26C8FE", "#35B2FF", "#5196FF", "#707AFF", "#9761FC", "#B752F1", "#D654E2", "#E562D7"];
 
@@ -27,8 +27,9 @@ function IntroArtwork() {
     <View style={StyleSheet.absoluteFill} testID="onboarding-hero">
       <Image
         key={attempt}
-        source={{ uri: ARTWORK }}
+        source={ARTWORK}
         contentFit="cover"
+        contentPosition="top"
         cachePolicy="memory-disk"
         accessible={false}
         testID="onboarding-background-artwork"
@@ -36,7 +37,21 @@ function IntroArtwork() {
         onError={() => { setLoading(false); setFailed(true); }}
         style={StyleSheet.absoluteFill}
       />
-      <LinearGradient colors={["#02091655", "#02091600", "#02091600", "#02091670", "#020916B8", INK]} locations={[0, 0.3, 0.49, 0.6, 0.76, 1]} style={[StyleSheet.absoluteFill, styles.noTouch]} />
+      {/* Velo blu notte uniforme: integra la foto nella UI scura. */}
+      <View style={[StyleSheet.absoluteFill, styles.noTouch, { backgroundColor: "#07122E", opacity: 0.22 }]} />
+      {/* Gradienti: cielo scuro in alto (logo), scena visibile al centro, fondo quasi nero per il testo. */}
+      <LinearGradient
+        colors={["#030814E6", "#03081480", "#03081400", "#03081400", "#0308149C", "#030814F2", INK]}
+        locations={[0, 0.12, 0.28, 0.5, 0.66, 0.8, 1]}
+        style={[StyleSheet.absoluteFill, styles.noTouch]}
+      />
+      {/* Leggera vignetta laterale ciano/viola per profondità. */}
+      <LinearGradient
+        colors={["#0E2A5A33", "#00000000", "#00000000", "#2A165A2E"]}
+        locations={[0, 0.3, 0.7, 1]}
+        start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+        style={[StyleSheet.absoluteFill, styles.noTouch]}
+      />
       {loading && <ActivityIndicator testID="onboarding-artwork-loading" color="#71B9F3" style={styles.artworkState} />}
       {failed && (
         <Pressable testID="onboarding-artwork-retry" accessibilityRole="button" onPress={() => { setLoading(true); setFailed(false); setAttempt(attempt + 1); }} style={styles.artworkState}>
@@ -69,9 +84,10 @@ function IntroButton({ onPress, height, fontSize }: { onPress: () => void; heigh
   const { t } = useI18n();
   return (
     <Pressable testID="onboarding-intro-continue" accessibilityRole="button" accessibilityLabel={t.onb_intro_cta} onPress={onPress} style={({ pressed }) => [styles.button, { height, borderRadius: height / 2 }, pressed && styles.buttonPressed]}>
-      <LinearGradient colors={["#D98DFF", "#657CFF", "#76DEFF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.buttonBorder}>
-        <LinearGradient colors={["#35217D", "#2C4BD0", "#238DDC"]} locations={[0, 0.58, 1]} start={{ x: 0, y: 0.8 }} end={{ x: 1, y: 0.1 }} style={styles.buttonFill}>
-          <LinearGradient colors={["#B8DDFF55", "#547EEA00", "#10093430"]} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={["#C98CFF", "#7FA6FF", "#8BEBFF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.buttonBorder}>
+        <LinearGradient colors={["#6E2FDC", "#4A4FF2", "#2F8DF0", "#26B8F0"]} locations={[0, 0.42, 0.78, 1]} start={{ x: 0, y: 0.7 }} end={{ x: 1, y: 0.3 }} style={styles.buttonFill}>
+          {/* Riflesso "vetro" in alto e ombra interna in basso. */}
+          <LinearGradient colors={["#FFFFFF3D", "#FFFFFF10", "#FFFFFF00", "#0B072E2E"]} locations={[0, 0.28, 0.55, 1]} style={StyleSheet.absoluteFill} />
           <Text testID="onboarding-intro-continue-label" style={[styles.buttonText, { fontSize }]} maxFontSizeMultiplier={1.2}>{t.onb_intro_cta}</Text>
           <Ionicons name="arrow-forward" color={WHITE} size={fontSize * 1.3} />
         </LinearGradient>
@@ -121,15 +137,21 @@ const styles = StyleSheet.create({
   artworkState: { position: "absolute", top: "45%", alignSelf: "center", minHeight: 44, minWidth: 44, justifyContent: "center" },
   retryText: { fontFamily: typography.bodyMedium, color: WHITE, fontSize: 16 },
   copy: { position: "absolute" },
-  headline: { fontFamily: typography.display, color: WHITE, letterSpacing: -0.55, includeFontPadding: false },
-  subtitle: { fontFamily: typography.body, color: "#D4DCF0", letterSpacing: -0.25, includeFontPadding: false },
+  headline: {
+    fontFamily: typography.displayBold, color: WHITE, letterSpacing: -0.6, includeFontPadding: false,
+    textShadowColor: "#03081499", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12,
+  },
+  subtitle: {
+    fontFamily: typography.body, color: "#C9D3EC", letterSpacing: -0.2, includeFontPadding: false,
+    textShadowColor: "#03081499", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8,
+  },
   footer: { position: "absolute" },
-  button: { minHeight: 44, boxShadow: "6px 1px 26px #168BFA66, -3px 0px 15px #9E49F544" },
-  buttonPressed: { opacity: 0.88, transform: [{ scale: 0.985 }] },
-  buttonBorder: { flex: 1, padding: 1.3, borderRadius: 100, overflow: "hidden" },
+  button: { minHeight: 44, boxShadow: "0px 10px 34px #3D6BFF66, 0px 0px 18px #8E4CF544, 0px 0px 10px #38C8FF33" },
+  buttonPressed: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  buttonBorder: { flex: 1, padding: 1.4, borderRadius: 100, overflow: "hidden" },
   buttonFill: { flex: 1, borderRadius: 100, overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
   buttonText: { fontFamily: typography.bodyBold, color: WHITE, includeFontPadding: false },
   dots: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  dot: { borderRadius: 20, backgroundColor: "#354573" },
-  activeDot: { backgroundColor: "#9FE7FF", boxShadow: "0px 0px 12px #41AEFFAA" },
+  dot: { borderRadius: 20, backgroundColor: "#2B3A66" },
+  activeDot: { backgroundColor: "#7FE3FF", boxShadow: "0px 0px 12px #41AEFFAA" },
 });

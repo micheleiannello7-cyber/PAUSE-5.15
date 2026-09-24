@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator, Pressable } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, Easing } from "react-native-reanimated";
+import Animated, { FadeInRight, FadeInLeft, FadeIn, FadeOut, LinearTransition, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -15,19 +15,23 @@ import { CategoryGrid, toggleInterest } from "@/src/components/category-grid";
 import { PagerDots } from "@/src/components/pager";
 import { OnboardingIntro } from "@/src/components/onboarding-intro";
 import { ModeCards, ModeChips } from "@/src/components/onboarding-modes";
+import { OnboardingSwipe, SwipeDir } from "@/src/components/onboarding-swipe";
+import { OnboardingToast, OnboardingNotice } from "@/src/components/onboarding-toast";
 import { useI18n } from "@/src/i18n";
 
 type Mode = "stories" | "lessons";
 
 // Fasi: 0 intro · 1 scelta formato (Curiosità / Mini lezioni) · 2 argomenti.
 const STEPS = 3;
-const FADE_IN = FadeInDown.duration(380).easing(Easing.out(Easing.cubic));
 const LAYOUT = LinearTransition.duration(340).easing(Easing.inOut(Easing.cubic));
+const enterFrom = (dir: SwipeDir) => (dir > 0 ? FadeInRight : FadeInLeft).duration(380).easing(Easing.out(Easing.cubic));
 
 export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
+  const [dir, setDir] = useState<SwipeDir>(1);
+  const [notice, setNotice] = useState<OnboardingNotice | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [modes, setModes] = useState<Set<Mode>>(new Set<Mode>());
   const [saving, setSaving] = useState(false);
@@ -56,8 +60,27 @@ export default function Onboarding() {
 
   const goTo = (index: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setDir(index >= step ? 1 : -1);
     setStep(index);
   };
+
+  // Messaggio "ben fatto" quando manca una scelta obbligatoria.
+  const explainMissing = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    setNotice(
+      step === 2 && modes.size > 0
+        ? { title: t.onb_need_topic_t, body: t.onb_need_topic_b, icon: "grid-outline" }
+        : { title: t.onb_need_mode_t, body: t.onb_need_mode_b, icon: "layers-outline" },
+    );
+  };
+
+  const canSwipe = (d: SwipeDir) => (d < 0 ? step > 0 : step === 0 || canContinue);
+  const onSwipe = (d: SwipeDir) => {
+    if (d < 0) { goTo(step - 1); return; }
+    if (step === 2) { onContinue(); return; }
+    goTo(step + 1);
+  };
+  const onBlockedSwipe = (d: SwipeDir) => { if (d > 0) explainMissing(); };
 
   const onContinue = async () => {
     if (!canContinue) return;
@@ -77,12 +100,19 @@ export default function Onboarding() {
 
   // Only the presentation changes; topic selection and persistence stay intact.
   if (step === 0) {
-    return <OnboardingIntro onContinue={() => setStep(1)} />;
+    return (
+      <OnboardingSwipe canGo={canSwipe} onGo={onSwipe} onBlocked={onBlockedSwipe} testID="onboarding-swipe">
+        <Animated.View key="intro" entering={enterFrom(dir)} style={styles.container}>
+          <OnboardingIntro onContinue={() => goTo(1)} />
+        </Animated.View>
+      </OnboardingSwipe>
+    );
   }
 
   // ------------------------------------------- STEP 1 formato · STEP 2 argomenti
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="onboarding-topics">
+      <OnboardingSwipe key={step} canGo={canSwipe} onGo={onSwipe} onBlocked={onBlockedSwipe} testID="onboarding-swipe">
       {isLoading ? (
         <ActivityIndicator color={colors.brand} style={{ marginTop: spacing.xxxl }} testID="onboarding-loading" />
       ) : isError || !categories ? (
@@ -113,7 +143,7 @@ export default function Onboarding() {
           bounces={false}
         >
           {topics ? (
-            <Animated.View key="topics" entering={FADE_IN} layout={LAYOUT}>
+            <Animated.View key="topics" entering={enterFrom(dir)} layout={LAYOUT}>
               <ModeChips modes={modes} onToggle={toggleMode} />
               <Text style={styles.stepTitle} testID="onboarding-topics-title">{t.onb_title}</Text>
               <Animated.View entering={FadeIn.delay(120).duration(360)} style={styles.hintCard} testID="onboarding-topics-hint">
@@ -130,25 +160,30 @@ export default function Onboarding() {
               />
             </Animated.View>
           ) : (
-            <Animated.View key="modes" entering={FADE_IN} exiting={FadeOut.duration(160)} layout={LAYOUT}>
+            <Animated.View key="modes" entering={enterFrom(dir)} exiting={FadeOut.duration(160)} layout={LAYOUT}>
               <Text style={styles.stepTitle} testID="onboarding-modes-title">{t.onb_content_q}</Text>
               <ModeCards modes={modes} onToggle={toggleMode} />
             </Animated.View>
           )}
         </ScrollView>
       )}
+      </OnboardingSwipe>
+
+      <OnboardingToast notice={notice} bottom={insets.bottom + 132} onHide={() => setNotice(null)} />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <PagerDots count={STEPS} index={step} onSelect={(i) => i < step && goTo(i)} style={styles.dots} testID="onboarding-dots" />
         <Pressable
           onPress={() => {
+            if (!canContinue) { explainMissing(); return; }
             if (!topics) { goTo(2); return; }
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
             onContinue();
           }}
-          disabled={!canContinue || saving}
+          disabled={saving}
           testID="onboarding-continue"
           accessibilityRole="button"
+          accessibilityState={{ disabled: !canContinue }}
           style={({ pressed }) => [
             styles.ctaBtn,
             { opacity: canContinue ? 1 : 0.45 },

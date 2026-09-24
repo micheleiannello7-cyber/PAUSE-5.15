@@ -509,3 +509,16 @@ Richiesta utente (IT): all'apertura le copertine arrivavano dopo qualche secondo
   `category_artwork.py`, `restore_category_art.py` supporta v4). Libri → `frontend/assets/images/kind-bulb.png` (KindIcon lessons).
 - Verifica: `test_reports` testing agent — backend 6/6 (`tests/test_iter32_onboarding_categories_media.py`), tutti i flussi onboarding,
   Home con nuove icone, 390/320px OK. TTS e Stripe restano disabilitati.
+
+## Swipe onboarding + messaggio "scegli almeno…" + restyle visivo intro (Sep 2026)
+- `src/components/onboarding-swipe.tsx`: Pan gesture (RNGH) su tutte e tre le schermate; il contenuto segue il dito (×0.42),
+  oltre soglia (22% larghezza o velocità) chiede `canGo(dir)`: se ok scivola via e cambia fase (entrata FadeInRight/Left),
+  altrimenti rimbalza e `onBlocked` mostra il messaggio. Avanti da formati richiede ≥1 formato; avanti da argomenti = "Inizia a scoprire"
+  (richiede ≥1 argomento, salva e va in Home). Indietro sempre possibile. `key={step}` sul wrapper per resettare lo stato.
+- `src/components/onboarding-toast.tsx`: messaggio curato (icona + titolo + riga) sopra il footer, auto-chiusura 2.8s, haptic warning.
+  Testi IT/EN `onb_need_mode_*`, `onb_need_topic_*`. Il CTA non è più disabilitato: senza scelta mostra lo stesso messaggio.
+- Presentazione (solo visivo, contenuti/testi/funzioni invariati): nuovo sfondo notturno dark-navy generato con Nano Banana
+  (`backend/generate_intro_bg.py`, salvato in `frontend/assets/images/intro-night.jpg`, 63KB, mockup utente in `memory/icons_2026/`);
+  velo blu + gradienti alto/basso + vignetta laterale; alone morbido dietro il logo e leggero glow sul wordmark; headline in Sora Bold
+  con ombra; pulsante con gradiente viola→blu→ciano più luminoso, bordo chiaro, riflesso vetro e glow controllato.
+- Verificato in preview: swipe avanti/indietro con mouse e touch, toast bloccante su formati e argomenti, CTA → toast, completamento → /discover.

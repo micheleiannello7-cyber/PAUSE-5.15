@@ -12,7 +12,10 @@ export function OnboardingBrand({ unit, top }: { unit: number; top: number }) {
   const shine = `intro-shine-${id}`;
   return (
     <View testID="onboarding-brand" style={[styles.brand, { top }]} accessible accessibilityLabel="PAUSE">
-      <Svg testID="onboarding-pause-mark" width={258 * unit} height={258 * unit} viewBox="0 0 120 120">
+      <View style={styles.markWrap}>
+        {/* Alone morbido blu/viola dietro l'anello: profondità senza effetto gaming. */}
+        <View pointerEvents="none" style={[styles.glow, { width: 190 * unit, height: 190 * unit, borderRadius: 95 * unit }]} />
+        <Svg testID="onboarding-pause-mark" width={258 * unit} height={258 * unit} viewBox="0 0 120 120">
         <Defs>
           <LinearGradient id={ring} x1="0" y1="0.2" x2="1" y2="0.7">
             <Stop offset="0" stopColor="#B347FF" /><Stop offset="0.22" stopColor="#D970FA" />
@@ -25,12 +28,14 @@ export function OnboardingBrand({ unit, top }: { unit: number; top: number }) {
             <Stop offset="0" stopColor="#F0BDFF" stopOpacity="0.75" /><Stop offset="0.35" stopColor="#ADDFFF" stopOpacity="0" /><Stop offset="1" stopColor="#75E9FF" stopOpacity="0.6" />
           </LinearGradient>
         </Defs>
-        <Circle cx="60" cy="60" r="51" stroke={`url(#${ring})`} strokeWidth="18" opacity="0.06" fill="none" />
-        <Circle cx="60" cy="60" r="51" stroke={`url(#${ring})`} strokeWidth="11" opacity="0.12" fill="none" />
+        <Circle cx="60" cy="60" r="51" stroke={`url(#${ring})`} strokeWidth="18" opacity="0.08" fill="none" />
+        <Circle cx="60" cy="60" r="51" stroke={`url(#${ring})`} strokeWidth="11" opacity="0.16" fill="none" />
+        <Circle cx="60" cy="60" r="51" fill="#0A1230" opacity="0.55" />
         <Circle cx="60" cy="60" r="51" stroke={`url(#${ring})`} strokeWidth="8.5" fill="none" />
         <Circle cx="60" cy="60" r="54.5" stroke={`url(#${shine})`} strokeWidth="1" fill="none" />
         {[40, 67].map((x) => <Rect key={x} x={x} y="36" width="14" height="48" rx="7" fill={`url(#${bars})`} stroke={`url(#${shine})`} strokeWidth="1" />)}
       </Svg>
+      </View>
       <View testID="onboarding-wordmark" style={[styles.wordmarkRow, { gap: 33 * unit, marginTop: 17 * unit }]}>
         {["P", "A", "U", "S", "E"].map((letter) => letter === "A" ? (
           <Svg key={letter} width={58 * unit} height={61 * unit} viewBox="0 0 60 64" testID="onboarding-wordmark-a">
@@ -44,6 +49,11 @@ export function OnboardingBrand({ unit, top }: { unit: number; top: number }) {
 
 const styles = StyleSheet.create({
   brand: { position: "absolute", left: 0, right: 0, alignItems: "center" },
+  markWrap: { alignItems: "center", justifyContent: "center" },
+  glow: { position: "absolute", backgroundColor: "#3B63FF22", boxShadow: "0px 0px 70px 30px #3F6BFF3D, 0px 0px 40px 10px #8A4CF52E" },
   wordmarkRow: { flexDirection: "row", alignItems: "center" },
-  wordmark: { color: "#F6F8FF", fontFamily: typography.display, includeFontPadding: false },
+  wordmark: {
+    color: "#F6F8FF", fontFamily: typography.display, includeFontPadding: false,
+    textShadowColor: "#6FB8FF66", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14,
+  },
 });
