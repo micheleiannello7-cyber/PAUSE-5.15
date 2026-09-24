@@ -38,11 +38,11 @@ function IntroArtwork() {
         style={StyleSheet.absoluteFill}
       />
       {/* Velo blu notte uniforme: integra la foto nella UI scura. */}
-      <View style={[StyleSheet.absoluteFill, styles.noTouch, { backgroundColor: "#07122E", opacity: 0.22 }]} />
+      <View style={[StyleSheet.absoluteFill, styles.noTouch, { backgroundColor: "#07122E", opacity: 0.12 }]} />
       {/* Gradienti: cielo scuro in alto (logo), scena visibile al centro, fondo quasi nero per il testo. */}
       <LinearGradient
-        colors={["#030814E6", "#03081480", "#03081400", "#03081400", "#0308149C", "#030814F2", INK]}
-        locations={[0, 0.12, 0.28, 0.5, 0.66, 0.8, 1]}
+        colors={["#030814CC", "#03081455", "#03081400", "#03081400", "#03081490", "#030814F0", INK]}
+        locations={[0, 0.1, 0.22, 0.5, 0.66, 0.8, 1]}
         style={[StyleSheet.absoluteFill, styles.noTouch]}
       />
       {/* Leggera vignetta laterale ciano/viola per profondità. */}
@@ -84,10 +84,10 @@ function IntroButton({ onPress, height, fontSize }: { onPress: () => void; heigh
   const { t } = useI18n();
   return (
     <Pressable testID="onboarding-intro-continue" accessibilityRole="button" accessibilityLabel={t.onb_intro_cta} onPress={onPress} style={({ pressed }) => [styles.button, { height, borderRadius: height / 2 }, pressed && styles.buttonPressed]}>
-      <LinearGradient colors={["#C98CFF", "#7FA6FF", "#8BEBFF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.buttonBorder}>
-        <LinearGradient colors={["#6E2FDC", "#4A4FF2", "#2F8DF0", "#26B8F0"]} locations={[0, 0.42, 0.78, 1]} start={{ x: 0, y: 0.7 }} end={{ x: 1, y: 0.3 }} style={styles.buttonFill}>
+      <LinearGradient colors={["#E08CFF", "#7FA0FF", "#7FEBFF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.buttonBorder}>
+        <LinearGradient colors={["#8A2BE8", "#5B3BF5", "#3556F2", "#2A8CF0", "#22C4F2"]} locations={[0, 0.3, 0.55, 0.8, 1]} start={{ x: 0, y: 0.7 }} end={{ x: 1, y: 0.3 }} style={styles.buttonFill}>
           {/* Riflesso "vetro" in alto e ombra interna in basso. */}
-          <LinearGradient colors={["#FFFFFF3D", "#FFFFFF10", "#FFFFFF00", "#0B072E2E"]} locations={[0, 0.28, 0.55, 1]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={["#FFFFFF38", "#FFFFFF0E", "#FFFFFF00", "#12063A2A"]} locations={[0, 0.28, 0.55, 1]} style={StyleSheet.absoluteFill} />
           <Text testID="onboarding-intro-continue-label" style={[styles.buttonText, { fontSize }]} maxFontSizeMultiplier={1.2}>{t.onb_intro_cta}</Text>
           <Ionicons name="arrow-forward" color={WHITE} size={fontSize * 1.3} />
         </LinearGradient>
@@ -113,15 +113,15 @@ export function OnboardingIntro({ onContinue }: { onContinue: () => void }) {
       <StatusBar style="light" />
       <View style={[styles.canvas, { width: canvasWidth }]}>
         <IntroArtwork />
-        <OnboardingBrand unit={unit} top={Math.max(insets.top + 16, contentHeight * 0.16)} />
-        <View style={[styles.copy, { top: contentHeight * 0.598, left: 158 * unit, right: 100 * unit }]}>
+        <OnboardingBrand unit={unit} top={Math.max(insets.top + 12, contentHeight * 0.075)} />
+        <View style={[styles.copy, { top: contentHeight * 0.588, left: 158 * unit, right: 100 * unit }]}>
           <IntroHeadline fontSize={Math.min(40, 67 * unit)} />
-          <Text testID="onboarding-subtitle" style={[styles.subtitle, { marginTop: 48 * unit, fontSize: Math.min(23, 43 * unit), lineHeight: Math.min(31, 57 * unit) }]} maxFontSizeMultiplier={1.15}>{t.onb_intro_sub}</Text>
+          <Text testID="onboarding-subtitle" style={[styles.subtitle, { marginTop: 56 * unit, fontSize: Math.min(23, 43 * unit), lineHeight: Math.min(31, 57 * unit) }]} maxFontSizeMultiplier={1.15}>{t.onb_intro_sub}</Text>
         </View>
-        <View style={[styles.footer, { top: Math.min(contentHeight * 0.815, contentHeight - buttonHeight - 60), left: 70 * unit, right: 64 * unit }]}>
+        <View style={[styles.footer, { top: Math.min(contentHeight * 0.838, contentHeight - buttonHeight - 60), left: 70 * unit, right: 64 * unit }]}>
           <IntroButton onPress={onContinue} height={buttonHeight} fontSize={Math.min(24, 44 * unit)} />
           {/* Three visual markers belong to the supplied design, not new routes. */}
-          <View testID="onboarding-dots" style={[styles.dots, { marginTop: 62 * unit, gap: 20 * unit }]} accessible={false}>
+          <View testID="onboarding-dots" style={[styles.dots, { marginTop: 54 * unit, gap: 20 * unit }]} accessible={false}>
             {[0, 1, 2].map((index) => <View key={index} testID={`onboarding-intro-dot-${index}`} style={[styles.dot, { width: (index === 0 ? 23 : 16) * unit, height: 15 * unit }, index === 0 && styles.activeDot]} />)}
           </View>
         </View>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     textShadowColor: "#03081499", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8,
   },
   footer: { position: "absolute" },
-  button: { minHeight: 44, boxShadow: "0px 10px 34px #3D6BFF66, 0px 0px 18px #8E4CF544, 0px 0px 10px #38C8FF33" },
+  button: { minHeight: 44, boxShadow: "0px 10px 36px #4A5CFF80, -6px 0px 22px #A63BFF55, 6px 0px 22px #2BC6FF55" },
   buttonPressed: { opacity: 0.9, transform: [{ scale: 0.985 }] },
   buttonBorder: { flex: 1, padding: 1.4, borderRadius: 100, overflow: "hidden" },
   buttonFill: { flex: 1, borderRadius: 100, overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },

@@ -6,8 +6,9 @@ import { View, Text, Pressable } from "react-native";
 import Animated, { FadeInDown, FadeOutUp, LinearTransition, Easing } from "react-native-reanimated";
 import Ionicons from "@react-native-vector-icons/ionicons";
 
-import { makeStyles, useTheme, spacing, typography, radius, withAlpha } from "@/src/theme";
+import { makeStyles, spacing, typography, radius, withAlpha } from "@/src/theme";
 import { KindIcon, StoryKind } from "@/src/components/kind-icon";
+import { ONB } from "@/src/components/onboarding-palette";
 import { useI18n } from "@/src/i18n";
 
 const ORDER: StoryKind[] = ["stories", "lessons"];
@@ -25,7 +26,6 @@ export function useModeCopy() {
 
 export function ModeCards({ modes, onToggle }: { modes: Set<StoryKind>; onToggle: (k: StoryKind) => void }) {
   const styles = useStyles();
-  const { colors } = useTheme();
   const { t } = useI18n();
   const { label, desc } = useModeCopy();
   const active = ORDER.filter((k) => modes.has(k));
@@ -44,15 +44,15 @@ export function ModeCards({ modes, onToggle }: { modes: Set<StoryKind>; onToggle
               accessibilityState={{ checked: on }}
               style={({ pressed }) => [
                 styles.card,
-                on && { borderColor: colors.brand, backgroundColor: withAlpha(colors.brand, 0.07) },
+                on && styles.cardOn,
                 pressed && styles.pressed,
               ]}
             >
               <View style={styles.cardTop}>
                 <KindIcon kind={k} size={52} lit={on} glow />
-                <Ionicons name={on ? "checkmark-circle" : "ellipse-outline"} size={20} color={on ? colors.brand : colors.borderStrong} />
+                <Ionicons name={on ? "checkmark-circle" : "ellipse-outline"} size={20} color={on ? ONB.cyan : ONB.glassBorderStrong} />
               </View>
-              <Text style={[styles.cardLabel, on && { color: colors.onSurface }]}>{label(k)}</Text>
+              <Text style={[styles.cardLabel, on && { color: ONB.text }]}>{label(k)}</Text>
             </Pressable>
           );
         })}
@@ -89,7 +89,6 @@ export function ModeCards({ modes, onToggle }: { modes: Set<StoryKind>; onToggle
 
 export function ModeChips({ modes, onToggle }: { modes: Set<StoryKind>; onToggle: (k: StoryKind) => void }) {
   const styles = useStyles();
-  const { colors } = useTheme();
   const { label } = useModeCopy();
   return (
     <View style={styles.chipRow} testID="onboarding-mode-chips">
@@ -104,13 +103,13 @@ export function ModeChips({ modes, onToggle }: { modes: Set<StoryKind>; onToggle
             accessibilityState={{ checked: on }}
             style={({ pressed }) => [
               styles.chip,
-              on && { borderColor: withAlpha(colors.brand, 0.7), backgroundColor: withAlpha(colors.brand, 0.08) },
+              on && styles.chipOn,
               pressed && styles.pressed,
             ]}
           >
             <KindIcon kind={k} size={22} lit={on} glow={false} />
-            <Text style={[styles.chipLabel, on && { color: colors.onSurface }]}>{label(k)}</Text>
-            {on ? <Ionicons name="checkmark" size={14} color={colors.brand} /> : null}
+            <Text style={[styles.chipLabel, on && { color: ONB.text }]}>{label(k)}</Text>
+            {on ? <Ionicons name="checkmark" size={14} color={ONB.cyan} /> : null}
           </Pressable>
         );
       })}
@@ -118,35 +117,43 @@ export function ModeChips({ modes, onToggle }: { modes: Set<StoryKind>; onToggle
   );
 }
 
-const useStyles = makeStyles((colors) => ({
+const useStyles = makeStyles(() => ({
   row: { flexDirection: "row", gap: spacing.md },
   card: {
     flex: 1, gap: 8, padding: spacing.md, minHeight: 124, borderRadius: radius.lg,
-    backgroundColor: colors.surfaceSecondary, borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: "rgba(12,26,58,0.62)", borderWidth: 1.5, borderColor: ONB.glassBorder,
+  },
+  cardOn: {
+    borderColor: withAlpha(ONB.cyan, 0.75), backgroundColor: "rgba(16,38,80,0.72)",
+    boxShadow: `0px 0px 22px ${withAlpha(ONB.cyan, 0.22)}` as any,
   },
   cardTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
-  cardLabel: { color: colors.onSurfaceSecondary, fontFamily: typography.bodyBold, fontSize: 16, marginTop: 2 },
+  cardLabel: { color: ONB.textSecondary, fontFamily: typography.bodyBold, fontSize: 16, marginTop: 2 },
   pressed: { opacity: 0.86, transform: [{ scale: 0.98 }] },
 
   panel: {
     marginTop: spacing.md, borderRadius: radius.lg, overflow: "hidden",
-    backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: "rgba(12,26,58,0.55)", borderWidth: 1, borderColor: ONB.glassBorder,
   },
   hint: {
-    color: colors.muted, fontFamily: typography.body, fontSize: 13, lineHeight: 18,
+    color: ONB.muted, fontFamily: typography.body, fontSize: 13, lineHeight: 18,
     paddingHorizontal: spacing.md, paddingVertical: spacing.md, textAlign: "center",
   },
   explain: { flexDirection: "row", gap: spacing.md, padding: spacing.md, alignItems: "flex-start" },
-  explainDivider: { borderTopWidth: 1, borderTopColor: colors.divider },
+  explainDivider: { borderTopWidth: 1, borderTopColor: ONB.glassBorder },
   explainText: { flex: 1, gap: 3 },
-  explainTitle: { color: colors.onSurface, fontFamily: typography.bodyBold, fontSize: 14 },
-  explainBody: { color: colors.onSurfaceSecondary, fontFamily: typography.body, fontSize: 13, lineHeight: 19 },
+  explainTitle: { color: ONB.text, fontFamily: typography.bodyBold, fontSize: 14 },
+  explainBody: { color: ONB.textSecondary, fontFamily: typography.body, fontSize: 13, lineHeight: 19 },
 
   chipRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.lg },
   chip: {
-    flexDirection: "row", alignItems: "center", gap: 6, minHeight: 40,
-    paddingLeft: 8, paddingRight: 12, borderRadius: radius.pill,
-    backgroundColor: colors.surfaceSecondary, borderWidth: 1.5, borderColor: colors.border,
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44,
+    paddingHorizontal: 12, borderRadius: radius.pill,
+    backgroundColor: "rgba(12,26,58,0.62)", borderWidth: 1.5, borderColor: ONB.glassBorder,
   },
-  chipLabel: { color: colors.onSurfaceSecondary, fontFamily: typography.bodyBold, fontSize: 13 },
+  chipOn: {
+    borderColor: withAlpha(ONB.cyan, 0.7), backgroundColor: "rgba(16,38,80,0.72)",
+    boxShadow: `0px 0px 18px ${withAlpha(ONB.cyan, 0.2)}` as any,
+  },
+  chipLabel: { color: ONB.textSecondary, fontFamily: typography.bodyBold, fontSize: 13 },
 }));

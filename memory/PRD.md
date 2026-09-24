@@ -522,3 +522,13 @@ Richiesta utente (IT): all'apertura le copertine arrivavano dopo qualche secondo
   velo blu + gradienti alto/basso + vignetta laterale; alone morbido dietro il logo e leggero glow sul wordmark; headline in Sora Bold
   con ombra; pulsante con gradiente viola→blu→ciano più luminoso, bordo chiaro, riflesso vetro e glow controllato.
 - Verificato in preview: swipe avanti/indietro con mouse e touch, toast bloccante su formati e argomenti, CTA → toast, completamento → /discover.
+- Rev. 2 intro (richiesta utente): simbolo PAUSE rifatto da zero in 3D con Nano Banana sul mockup (`backend/generate_pause_mark.py`
+  → `frontend/assets/images/pause-mark.png`, nero→alpha per conservare il glow; sostituisce l'SVG dell'anello, wordmark vettoriale invariato);
+  pulsante più saturo (viola #8A2BE8 → blu → ciano #22C4F2, glow laterale viola/ciano); sfondo rigenerato nitido senza foschia
+  (`intro_bg_v2`, unsharp leggero, velo blu ridotto a 0.12); logo+wordmark più in alto (7.5%), copy a 58.8%, pulsante a 83.8%
+  con più aria tra testi e CTA.
+- Schermate formati/argomenti dell'onboarding vestite come il mockup (solo visivo): palette fissa `src/components/onboarding-palette.ts`
+  (dark navy, glass, ciano, viola); fondo LinearGradient + due bagliori (orb blu in alto a destra, viola in basso a sinistra);
+  chip formati a tutta larghezza in vetro con bordo ciano; card/pannello spiegazione in vetro; card suggerimento glass ciano;
+  `CategoryGrid glass` (solo onboarding: tessere con gradiente navy, bordo chiaro, icone ritagliate `cutout=true` con alone nel
+  colore categoria via `CategoryArtwork glass`); CTA a pillola in vetro con bordo/glow ciano; footer trasparente. Explore/Home invariati.

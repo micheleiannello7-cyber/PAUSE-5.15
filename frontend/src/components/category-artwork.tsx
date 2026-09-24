@@ -11,24 +11,31 @@ const ART_VERSION = "colorful-3d-v3";
 type ArtworkProps = {
   category: Pick<Category, "id" | "color" | "illustration_generated">;
   testID: string; wide?: boolean; compact?: boolean; cornerRadius?: number;
+  /** Stile "vetro" (onboarding): solo l'oggetto 3D ritagliato, senza piastrella nera, con alone morbido. */
+  glass?: boolean;
 };
 
 export function CategoryArtwork({ category, ...props }: ArtworkProps) {
-  const uri = category.id === "all"
-    ? categoryArtworkUrl("all", ART_VERSION)
-    : categoryIllustrationUrl(category);
+  const uri = props.glass
+    ? categoryArtworkUrl(category.id, category.id === "all" ? ART_VERSION : (category.illustration_generated || ART_VERSION), true)
+    : category.id === "all"
+      ? categoryArtworkUrl("all", ART_VERSION)
+      : categoryIllustrationUrl(category);
   return <Artwork key={`${CATEGORY_VISUAL_MODE}:${uri}`} category={category} uri={uri} {...props} />;
 }
 
-function Artwork({ category, uri, testID, wide = false, compact = false, cornerRadius = radius.lg }: ArtworkProps & { uri: string | null }) {
+function Artwork({ category, uri, testID, wide = false, compact = false, cornerRadius = radius.lg, glass = false }: ArtworkProps & { uri: string | null }) {
   const styles = useStyles();
   const { colors } = useTheme();
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const showImage = CATEGORY_VISUAL_MODE === "illustrated" && !!uri && !failed;
-  const imageStyle = wide ? styles.bannerImage : [styles.image, compact && styles.compactImage];
+  const imageStyle = wide ? [styles.bannerImage, glass && styles.glassBanner] : [styles.image, compact && styles.compactImage, glass && styles.glassImage];
   return (
-    <View testID={testID} style={[styles.fill, { borderRadius: cornerRadius }]} accessibilityState={{ busy: showImage && !loaded }}>
+    <View testID={testID} style={[styles.fill, { borderRadius: cornerRadius }, glass && styles.glassFill]} accessibilityState={{ busy: showImage && !loaded }}>
+      {glass ? (
+        <View pointerEvents="none" style={[wide ? styles.glowWide : styles.glow, { backgroundColor: withAlpha(category.color, 0.16), boxShadow: `0px 0px ${wide ? 34 : 26}px ${wide ? 12 : 8}px ${withAlpha(category.color, 0.16)}` as any }]} />
+      ) : null}
       {(!showImage || !loaded) ? (
         <View style={[imageStyle, styles.center]} testID={`${testID}-fallback`}>
           <CategoryIcon categoryId={category.id} color={category.color} highlightColor={colors.onGradient} size={compact ? 34 : 35} testID={`${testID}-line-icon`} />
@@ -41,7 +48,7 @@ function Artwork({ category, uri, testID, wide = false, compact = false, cornerR
       </View> : null}
       {/* Quiet framing, not desaturation: the new objects retain their full
           colour. No luminous backplates or clips from the previous art family. */}
-      {!wide ? <LinearGradient
+      {!wide && !glass ? <LinearGradient
         colors={[withAlpha(colors.artworkSurface, 0), withAlpha(colors.artworkSurface, 0), withAlpha(colors.artworkSurface, 0.94), colors.artworkSurface]}
         locations={[0, 0.48, 0.81, 1]} style={StyleSheet.absoluteFill}
       /> : null}
@@ -51,9 +58,14 @@ function Artwork({ category, uri, testID, wide = false, compact = false, cornerR
 
 const useStyles = makeStyles((colors) => ({
   fill: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.artworkSurface, overflow: "hidden", pointerEvents: "none" },
+  glassFill: { backgroundColor: "transparent" },
   image: { position: "absolute", top: -2, left: "5%", width: "90%", aspectRatio: 1 },
   compactImage: { top: 0, left: "9%", width: "82%" },
+  glassImage: { top: "8%", left: "17%", width: "66%" },
   bannerImage: { position: "absolute", top: -9, right: 0, width: 106, height: 106 },
+  glassBanner: { top: -2, right: 12, width: 92, height: 92 },
+  glow: { position: "absolute", top: "14%", left: "32%", width: "36%", aspectRatio: 1, borderRadius: 999 },
+  glowWide: { position: "absolute", top: 14, right: 26, width: 56, height: 56, borderRadius: 28 },
   center: { alignItems: "center", justifyContent: "center" },
 }));
 

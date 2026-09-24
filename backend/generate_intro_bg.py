@@ -28,7 +28,7 @@ PROMPT = (
     "on the right a lone person silhouette sits on a dark rocky outcrop looking at the horizon. "
     "The horizon has a faint, soft dusk glow in muted blue, cyan and a hint of violet-pink; a few "
     "subtle stars and a faint large moon or planet in the upper right. Deep dark blue / cyan tones "
-    "with small purple accents, soft volumetric mist, smooth painterly digital-art look. "
+    "with small purple accents. RAZOR-SHARP, crisp, highly detailed 4K rendering: sharp mountain ridges, crisp rocks and silhouette edges, clear water reflections, NO blur, NO haze, NO fog, NO soft focus, NO mist. "
     "The top 30% of the image must be dark, quiet sky (space for a logo) and the bottom 35% must "
     "fade to near-black dark navy (space for text). No text, no logos, no UI, no bright areas, "
     "elegant and restrained, not saturated."
@@ -47,7 +47,7 @@ async def main():
         raise RuntimeError("no image returned")
     raw = base64.b64decode(images[0]["data"])
     image = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
-    out = OUT / "intro_bg.raw.png"
+    out = OUT / "intro_bg_v2.raw.png"
     image.save(out)
     print("saved", out, image.size, flush=True)
 

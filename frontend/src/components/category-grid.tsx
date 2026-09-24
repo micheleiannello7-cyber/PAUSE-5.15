@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import Animated, { FadeInUp, Easing } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Category } from "@/src/api";
 import { makeStyles, useTheme, spacing, radius, typography, withAlpha } from "@/src/theme";
 import { useI18n } from "@/src/i18n";
 import { CategoryArtwork } from "./category-artwork";
+import { ONB } from "./onboarding-palette";
 
 export const ALL_ID = "all";
 
@@ -27,8 +29,8 @@ export function toggleInterest(prev: Set<string>, id: string): Set<string> {
 // Selecting a tile tints its border and shows a check. `compact` is accepted for API
 // compatibility; the layout is the same everywhere.
 export function CategoryGrid({
-  categories, selected, onToggle, modes, staggerIn = false,
-}: { categories: Category[]; selected: Set<string>; onToggle: (id: string) => void; compact?: boolean; modes?: ("stories" | "lessons")[]; staggerIn?: boolean }) {
+  categories, selected, onToggle, modes, staggerIn = false, glass = false,
+}: { categories: Category[]; selected: Set<string>; onToggle: (id: string) => void; compact?: boolean; modes?: ("stories" | "lessons")[]; staggerIn?: boolean; /** Stile "vetro" dark navy dell'onboarding (icone ritagliate, tessere con gradiente). */ glass?: boolean }) {
   const allActive = selected.has(ALL_ID);
   const { t } = useI18n();
   const styles = useStyles();
@@ -63,11 +65,14 @@ export function CategoryGrid({
         accessibilityLabel={t.any_topic}
         style={({ pressed }) => [
           styles.allCard,
+          glass && styles.glassCard,
           allActive && { borderColor: colors.cyan + "AA" },
+          allActive && glass && styles.glassCardOn,
           pressed && styles.pressed,
         ]}
       >
-        <CategoryArtwork category={{ id: "all", color: colors.cyan }} wide testID="category-art-all" />
+        {glass ? <LinearGradient colors={[ONB.glassTop, ONB.glassBottom]} style={styles.glassBg} pointerEvents="none" /> : null}
+        <CategoryArtwork category={{ id: "all", color: colors.cyan }} wide glass={glass} testID="category-art-all" />
         <View style={styles.allText}>
           <Text testID="category-all-name" style={styles.allName} numberOfLines={2}>{t.any_topic}</Text>
           <Text testID="category-all-subtitle" style={styles.allSub} numberOfLines={2}>{t.any_topic_sub}</Text>
@@ -89,13 +94,16 @@ export function CategoryGrid({
               accessibilityLabel={`${c.name}, ${countFor(c)}`}
               style={({ pressed }) => [
                 styles.tile,
+                glass && styles.glassCard,
                 active && {
                   borderColor: c.color + "AA",
                 },
+                active && glass && { boxShadow: `0px 0px 18px ${withAlpha(c.color, 0.28)}` as any },
                 pressed && styles.pressed,
               ]}
             >
-              <CategoryArtwork category={c} testID={`category-art-${c.id}`} />
+              {glass ? <LinearGradient colors={[ONB.glassTop, ONB.glassBottom]} style={styles.glassBg} pointerEvents="none" /> : null}
+              <CategoryArtwork category={c} glass={glass} testID={`category-art-${c.id}`} />
               {active ? <SelectionMark id={c.id} color={c.color} /> : null}
               <View style={styles.labels}>
                 <Text testID={`category-name-${c.id}`} style={styles.tileName} numberOfLines={2}>{c.name}</Text>
@@ -151,4 +159,7 @@ const useStyles = makeStyles((colors) => ({
   tileName: { color: colors.onGradient, fontFamily: typography.bodyBold, fontSize: 12, lineHeight: 15, textAlign: "center" },
   tileCount: { color: withAlpha(colors.onGradient, 0.68), fontFamily: typography.body, fontSize: 10, lineHeight: 12, textAlign: "center" },
   pressed: { opacity: 0.86, transform: [{ scale: 0.98 }] },
+  glassCard: { backgroundColor: "transparent", borderColor: ONB.glassBorder, overflow: "hidden" },
+  glassCardOn: { boxShadow: `0px 0px 20px ${withAlpha(ONB.cyan, 0.26)}` as any },
+  glassBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
 }));

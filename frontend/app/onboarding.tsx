@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import Animated, { FadeInRight, FadeInLeft, FadeIn, FadeOut, LinearTransition, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -17,6 +17,8 @@ import { OnboardingIntro } from "@/src/components/onboarding-intro";
 import { ModeCards, ModeChips } from "@/src/components/onboarding-modes";
 import { OnboardingSwipe, SwipeDir } from "@/src/components/onboarding-swipe";
 import { OnboardingToast, OnboardingNotice } from "@/src/components/onboarding-toast";
+import { ONB } from "@/src/components/onboarding-palette";
+import { LinearGradient } from "expo-linear-gradient";
 import { useI18n } from "@/src/i18n";
 
 type Mode = "stories" | "lessons";
@@ -112,6 +114,10 @@ export default function Onboarding() {
   // ------------------------------------------- STEP 1 formato · STEP 2 argomenti
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="onboarding-topics">
+      {/* Fondo dark navy cinematografico con bagliori blu/viola (stile mockup). */}
+      <LinearGradient colors={[ONB.bgTop, ONB.bgMid, ONB.bgBottom]} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      <View style={styles.orb} pointerEvents="none" />
+      <View style={styles.orbViolet} pointerEvents="none" />
       <OnboardingSwipe key={step} canGo={canSwipe} onGo={onSwipe} onBlocked={onBlockedSwipe} testID="onboarding-swipe">
       {isLoading ? (
         <ActivityIndicator color={colors.brand} style={{ marginTop: spacing.xxxl }} testID="onboarding-loading" />
@@ -147,12 +153,13 @@ export default function Onboarding() {
               <ModeChips modes={modes} onToggle={toggleMode} />
               <Text style={styles.stepTitle} testID="onboarding-topics-title">{t.onb_title}</Text>
               <Animated.View entering={FadeIn.delay(120).duration(360)} style={styles.hintCard} testID="onboarding-topics-hint">
-                <Ionicons name="sparkles-outline" size={16} color={colors.brand} style={styles.hintIcon} />
+                <Ionicons name="sparkles-outline" size={16} color={ONB.cyan} style={styles.hintIcon} />
                 <Text style={styles.hintText}>{t.onb_topics_hint.replace("{formats}", formats)}</Text>
               </Animated.View>
               <CategoryGrid
                 compact
                 staggerIn
+                glass
                 categories={categories}
                 selected={selected}
                 modes={Array.from(modes)}
@@ -172,7 +179,7 @@ export default function Onboarding() {
       <OnboardingToast notice={notice} bottom={insets.bottom + 132} onHide={() => setNotice(null)} />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <PagerDots count={STEPS} index={step} onSelect={(i) => i < step && goTo(i)} style={styles.dots} testID="onboarding-dots" />
+        <PagerDots count={STEPS} index={step} color={ONB.cyan} onSelect={(i) => i < step && goTo(i)} style={styles.dots} testID="onboarding-dots" />
         <Pressable
           onPress={() => {
             if (!canContinue) { explainMissing(); return; }
@@ -192,11 +199,11 @@ export default function Onboarding() {
           ]}
         >
           {saving ? (
-            <ActivityIndicator color={colors.cyan} />
+            <ActivityIndicator color={ONB.cyan} />
           ) : (
             <>
               <Text style={styles.ctaText}>{topics ? t.onb_cta : t.onb_modes_next}</Text>
-              <Ionicons name="arrow-forward" size={18} color={colors.cyan} />
+              <Ionicons name="arrow-forward" size={18} color={ONB.cyan} />
             </>
           )}
         </Pressable>
@@ -206,35 +213,46 @@ export default function Onboarding() {
 }
 
 const useStyles = makeStyles((colors) => ({
-  container: { flex: 1, backgroundColor: colors.surface },
+  container: { flex: 1, backgroundColor: ONB.bgTop },
+  orb: {
+    position: "absolute", top: -140, right: -110, width: 340, height: 340, borderRadius: 170,
+    backgroundColor: ONB.orb, boxShadow: "0px 0px 150px 70px rgba(31,75,255,0.16)" as any,
+  },
+  orbViolet: {
+    position: "absolute", bottom: 120, left: -160, width: 300, height: 300, borderRadius: 150,
+    backgroundColor: "rgba(120,60,255,0.06)", boxShadow: "0px 0px 140px 60px rgba(120,60,255,0.08)" as any,
+  },
   scroll: { flex: 1 },
   content: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.lg },
   contentCentered: { flexGrow: 1, justifyContent: "center", paddingBottom: spacing.xxxl },
-  stepTitle: { color: colors.onSurface, fontFamily: typography.displayBold, fontSize: 28, lineHeight: 34, marginBottom: spacing.lg },
+  stepTitle: {
+    color: ONB.text, fontFamily: typography.displayBold, fontSize: 28, lineHeight: 34, marginBottom: spacing.lg,
+    textShadowColor: "rgba(55,211,255,0.25)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 18,
+  },
   hintCard: {
     flexDirection: "row", alignItems: "flex-start", gap: spacing.sm,
     padding: spacing.md, marginBottom: spacing.lg, borderRadius: radius.lg,
-    backgroundColor: withAlpha(colors.brand, 0.08), borderWidth: 1, borderColor: withAlpha(colors.brand, 0.28),
+    backgroundColor: "rgba(12,26,58,0.65)", borderWidth: 1, borderColor: "rgba(55,211,255,0.32)",
+    boxShadow: "0px 0px 24px rgba(55,211,255,0.08)" as any,
   },
   hintIcon: { marginTop: 2 },
-  hintText: { flex: 1, color: colors.onSurfaceSecondary, fontFamily: typography.body, fontSize: 13, lineHeight: 19 },
+  hintText: { flex: 1, color: ONB.textSecondary, fontFamily: typography.body, fontSize: 13, lineHeight: 19 },
   dots: { alignSelf: "center", marginBottom: spacing.md },
   ctaBtn: {
-    minHeight: 56, borderRadius: radius.lg, overflow: "hidden",
+    minHeight: 56, borderRadius: radius.pill, overflow: "hidden",
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm,
-    backgroundColor: colors.artworkSurface,
-    borderWidth: 1.5, borderColor: colors.glassBorderStrong,
+    backgroundColor: "rgba(8,20,47,0.85)",
+    borderWidth: 1.5, borderColor: ONB.glassBorder,
   },
   ctaBtnActive: {
-    borderColor: withAlpha(colors.cyan, 0.67),
-    boxShadow: `0px 0px 14px ${colors.cyanGlow}` as any,
+    borderColor: withAlpha(ONB.cyan, 0.7),
+    boxShadow: `0px 0px 22px ${withAlpha(ONB.cyan, 0.28)}, 0px 8px 30px rgba(31,75,255,0.25)` as any,
   },
   ctaPressed: { opacity: 0.86, transform: [{ scale: 0.99 }] },
-  ctaText: { color: colors.onGradient, fontFamily: typography.bodyBold, fontSize: 16 },
+  ctaText: { color: ONB.cyanSoft, fontFamily: typography.bodyBold, fontSize: 16 },
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1, borderTopColor: colors.divider,
+    backgroundColor: "transparent",
   },
   errorWrap: {
     flex: 1, alignItems: "center", justifyContent: "center",
