@@ -82,18 +82,22 @@ export const Pager = forwardRef<PagerHandle, PagerProps>(function Pager(
 
 // Row of dots; the active one stretches into a short pill in the accent colour.
 export function PagerDots({
-  count, index, color, style, testID = "pager-dots",
-}: { count: number; index: number; color?: string; style?: StyleProp<ViewStyle>; testID?: string }) {
+  count, index, color, style, testID = "pager-dots", onSelect,
+}: { count: number; index: number; color?: string; style?: StyleProp<ViewStyle>; testID?: string; onSelect?: (index: number) => void }) {
   const s = useDotStyles();
   const { colors } = useTheme();
   const active = color ?? colors.brand;
   return (
     <View style={[s.row, style]} testID={testID} accessibilityLabel={`${index + 1} / ${count}`}>
       {Array.from({ length: count }, (_, i) => (
-        <View
+        <Pressable
           key={i}
+          onPress={onSelect ? () => onSelect(i) : undefined}
+          disabled={!onSelect || i === index}
+          hitSlop={10}
+          accessibilityRole={onSelect ? "button" : undefined}
           style={[s.dot, i === index && { width: 20, backgroundColor: active }]}
-          testID={i === index ? "pager-dot-active" : undefined}
+          testID={i === index ? "pager-dot-active" : `pager-dot-${i}`}
         />
       ))}
     </View>

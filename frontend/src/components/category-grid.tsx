@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
+import Animated, { FadeInUp, Easing } from "react-native-reanimated";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Category } from "@/src/api";
 import { makeStyles, useTheme, spacing, radius, typography, withAlpha } from "@/src/theme";
@@ -26,12 +27,16 @@ export function toggleInterest(prev: Set<string>, id: string): Set<string> {
 // Selecting a tile tints its border and shows a check. `compact` is accepted for API
 // compatibility; the layout is the same everywhere.
 export function CategoryGrid({
-  categories, selected, onToggle, modes,
-}: { categories: Category[]; selected: Set<string>; onToggle: (id: string) => void; compact?: boolean; modes?: ("stories" | "lessons")[] }) {
+  categories, selected, onToggle, modes, staggerIn = false,
+}: { categories: Category[]; selected: Set<string>; onToggle: (id: string) => void; compact?: boolean; modes?: ("stories" | "lessons")[]; staggerIn?: boolean }) {
   const allActive = selected.has(ALL_ID);
   const { t } = useI18n();
   const styles = useStyles();
   const { colors } = useTheme();
+  // Ingresso progressivo (onboarding): ogni tessera sale e appare con un
+  // piccolo ritardo a cascata; altrove la griglia compare subito.
+  const enterAt = (order: number) =>
+    staggerIn ? FadeInUp.delay(order * 55).duration(420).easing(Easing.out(Easing.cubic)) : undefined;
   // Larghezza tessere dal contenitore misurato: sempre 3 colonne centrate,
   // anche su schermi stretti (con le percentuali scendeva a 2 per riga).
   const [gridW, setGridW] = useState(0);
@@ -49,6 +54,7 @@ export function CategoryGrid({
 
   return (
     <View testID="category-grid">
+      <Animated.View entering={enterAt(0)}>
       <Pressable
         testID="chip-all"
         onPress={() => onToggle(ALL_ID)}
@@ -68,13 +74,14 @@ export function CategoryGrid({
         </View>
         {allActive ? <SelectionMark id="all" color={colors.cyan} /> : null}
       </Pressable>
+      </Animated.View>
 
       <View style={styles.grid} onLayout={(e) => setGridW(Math.round(e.nativeEvent.layout.width))}>
-        {tileW ? categories.map((c) => {
+        {tileW ? categories.map((c, i) => {
           const active = selected.has(c.id);
           return (
+            <Animated.View key={c.id} entering={enterAt(i + 1)} style={{ width: tileW }}>
             <Pressable
-              key={c.id}
               testID={`chip-${c.id}`}
               onPress={() => onToggle(c.id)}
               accessibilityRole="checkbox"
@@ -82,7 +89,6 @@ export function CategoryGrid({
               accessibilityLabel={`${c.name}, ${countFor(c)}`}
               style={({ pressed }) => [
                 styles.tile,
-                { width: tileW },
                 active && {
                   borderColor: c.color + "AA",
                 },
@@ -96,6 +102,7 @@ export function CategoryGrid({
                 <Text testID={`category-count-${c.id}`} style={styles.tileCount} numberOfLines={1}>{countFor(c)}</Text>
               </View>
             </Pressable>
+            </Animated.View>
           );
         }) : null}
       </View>
@@ -132,7 +139,7 @@ const useStyles = makeStyles((colors) => ({
 
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, paddingTop: spacing.xs, paddingHorizontal: spacing.xs, justifyContent: "center" },
   tile: {
-    aspectRatio: 0.86, minHeight: 112, justifyContent: "flex-end", overflow: "visible",
+    width: "100%", aspectRatio: 0.86, minHeight: 112, justifyContent: "flex-end", overflow: "visible",
     borderRadius: radius.lg,
     backgroundColor: colors.artworkSurface, borderWidth: 1, borderColor: withAlpha(colors.onGradient, 0.12),
   },

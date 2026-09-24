@@ -12,6 +12,7 @@ async def ensure_category_artwork(db):
     previous_prefixes = (
         "pause/category/glass-2026-09-v1/",
         "pause/category/recognizable-2026-09-v2/",
+        "pause/category/colorful-3d-v3/",
     )
     for category_id, path in manifest["artworks"].items():
         fields = {"illustration_generated": path, "illustration_revision": manifest["version"]}

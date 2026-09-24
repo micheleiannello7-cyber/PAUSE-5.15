@@ -35,7 +35,7 @@ def encode_icon(image: Image.Image) -> bytes:
     size = max(image.size)
     square = Image.new("RGB", (size, size), (5, 7, 12))
     square.paste(image, ((size - image.width) // 2, (size - image.height) // 2))
-    square.thumbnail((384, 384), Image.Resampling.LANCZOS)
+    square.thumbnail((512, 512), Image.Resampling.LANCZOS)
     encoded = io.BytesIO()
     square.save(encoded, "WEBP", quality=90, method=6)
     return encoded.getvalue()
@@ -54,6 +54,10 @@ def build_assets() -> tuple[str, dict[str, bytes]]:
     assets["all"] = encode_icon(read_image(config["all_url"]))
     for category_id, url in config.get("overrides", {}).items():
         assets[category_id] = encode_icon(read_image(url))
+    # Sorgenti versionate nel repo (icone 2026: zampa Animali, stella Qualsiasi
+    # argomento): sopravvivono ai fork senza dipendere da URL esterni.
+    for category_id, rel_path in config.get("local_overrides", {}).items():
+        assets[category_id] = encode_icon(Image.open(ROOT / rel_path).convert("RGB"))
     return config["version"], assets
 
 

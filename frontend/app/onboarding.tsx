@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -13,17 +14,22 @@ import { getOrCreateUserId, setOnboarded } from "@/src/session";
 import { CategoryGrid, toggleInterest } from "@/src/components/category-grid";
 import { PagerDots } from "@/src/components/pager";
 import { OnboardingIntro } from "@/src/components/onboarding-intro";
-import { KindIcon } from "@/src/components/kind-icon";
+import { ModeCards, ModeChips } from "@/src/components/onboarding-modes";
 import { useI18n } from "@/src/i18n";
 
 type Mode = "stories" | "lessons";
+
+// Fasi: 0 intro · 1 scelta formato (Curiosità / Mini lezioni) · 2 argomenti.
+const STEPS = 3;
+const FADE_IN = FadeInDown.duration(380).easing(Easing.out(Easing.cubic));
+const LAYOUT = LinearTransition.duration(340).easing(Easing.inOut(Easing.cubic));
 
 export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [modes, setModes] = useState<Set<Mode>>(new Set<Mode>(["stories"]));
+  const [modes, setModes] = useState<Set<Mode>>(new Set<Mode>());
   const [saving, setSaving] = useState(false);
   const { t } = useI18n();
   const styles = useStyles();
@@ -33,17 +39,24 @@ export default function Onboarding() {
     queryFn: api.categories,
   });
 
-  const canContinue = selected.size > 0 && modes.size > 0;
+  const topics = step === 2;
+  const canContinue = topics ? selected.size > 0 && modes.size > 0 : modes.size > 0;
 
   const toggleMode = (m: Mode) => {
+    Haptics.selectionAsync().catch(() => {});
     setModes((prev) => {
       const next = new Set(prev);
       if (next.has(m)) next.delete(m);
       else next.add(m);
-      // never let the user end with nothing selected
-      if (next.size === 0) next.add(m);
+      // in fase argomenti non si resta mai senza formato
+      if (topics && next.size === 0) next.add(m);
       return next;
     });
+  };
+
+  const goTo = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setStep(index);
   };
 
   const onContinue = async () => {
@@ -60,12 +73,14 @@ export default function Onboarding() {
     }
   };
 
+  const formats = modes.size === 2 ? t.onb_formats_both : modes.has("lessons") ? t.onb_formats_lessons : t.onb_formats_stories;
+
   // Only the presentation changes; topic selection and persistence stay intact.
   if (step === 0) {
     return <OnboardingIntro onContinue={() => setStep(1)} />;
   }
 
-  // ------------------------------------------------ STEP 1 — content + topics
+  // ------------------------------------------- STEP 1 formato · STEP 2 argomenti
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="onboarding-topics">
       {isLoading ? (
@@ -93,56 +108,41 @@ export default function Onboarding() {
       ) : (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, !topics && styles.contentCentered]}
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
-          <Pressable onPress={() => setStep(0)} style={styles.backLink} testID="onboarding-back" hitSlop={8}>
-            <Ionicons name="arrow-back" size={18} color={colors.muted} />
-            <Text style={styles.backLinkText}>{t.back}</Text>
-          </Pressable>
-
-          {/* Single, prominent title — one clear hierarchy */}
-          <Text style={styles.stepTitle}>{t.onb_content_q}</Text>
-
-          {/* Content toggles: curiosities / mini lessons, individually or both */}
-          <View style={styles.modeRow}>
-            <ModeToggle
-              kind="stories"
-              label={t.onb_toggle_stories}
-              active={modes.has("stories")}
-              onPress={() => toggleMode("stories")}
-              styles={styles}
-              colors={colors}
-              testID="onboarding-mode-stories"
-            />
-            <ModeToggle
-              kind="lessons"
-              label={t.onb_toggle_lessons}
-              active={modes.has("lessons")}
-              onPress={() => toggleMode("lessons")}
-              styles={styles}
-              colors={colors}
-              testID="onboarding-mode-lessons"
-            />
-          </View>
-
-          <Text style={styles.sectionLabel}>{t.onb_interests_label}</Text>
-          <Text style={styles.subtitle}>{t.onb_subtitle}</Text>
-          <CategoryGrid
-            compact
-            categories={categories}
-            selected={selected}
-            modes={Array.from(modes)}
-            onToggle={(id) => setSelected((prev) => toggleInterest(prev, id))}
-          />
+          {topics ? (
+            <Animated.View key="topics" entering={FADE_IN} layout={LAYOUT}>
+              <ModeChips modes={modes} onToggle={toggleMode} />
+              <Text style={styles.stepTitle} testID="onboarding-topics-title">{t.onb_title}</Text>
+              <Animated.View entering={FadeIn.delay(120).duration(360)} style={styles.hintCard} testID="onboarding-topics-hint">
+                <Ionicons name="sparkles-outline" size={16} color={colors.brand} style={styles.hintIcon} />
+                <Text style={styles.hintText}>{t.onb_topics_hint.replace("{formats}", formats)}</Text>
+              </Animated.View>
+              <CategoryGrid
+                compact
+                staggerIn
+                categories={categories}
+                selected={selected}
+                modes={Array.from(modes)}
+                onToggle={(id) => setSelected((prev) => toggleInterest(prev, id))}
+              />
+            </Animated.View>
+          ) : (
+            <Animated.View key="modes" entering={FADE_IN} exiting={FadeOut.duration(160)} layout={LAYOUT}>
+              <Text style={styles.stepTitle} testID="onboarding-modes-title">{t.onb_content_q}</Text>
+              <ModeCards modes={modes} onToggle={toggleMode} />
+            </Animated.View>
+          )}
         </ScrollView>
       )}
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <PagerDots count={2} index={1} style={styles.dots} testID="onboarding-dots" />
+        <PagerDots count={STEPS} index={step} onSelect={(i) => i < step && goTo(i)} style={styles.dots} testID="onboarding-dots" />
         <Pressable
           onPress={() => {
+            if (!topics) { goTo(2); return; }
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
             onContinue();
           }}
@@ -160,7 +160,7 @@ export default function Onboarding() {
             <ActivityIndicator color={colors.cyan} />
           ) : (
             <>
-              <Text style={styles.ctaText}>{t.onb_cta}</Text>
+              <Text style={styles.ctaText}>{topics ? t.onb_cta : t.onb_modes_next}</Text>
               <Ionicons name="arrow-forward" size={18} color={colors.cyan} />
             </>
           )}
@@ -170,52 +170,19 @@ export default function Onboarding() {
   );
 }
 
-function ModeToggle({
-  kind, label, hint, active, onPress, styles, colors, testID,
-}: {
-  kind: Mode; label: string; hint?: string; active: boolean; onPress: () => void;
-  styles: any; colors: any; testID: string;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      testID={testID}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: active }}
-      style={[styles.modeCard, active && { borderColor: colors.brand, backgroundColor: colors.brand + "12" }]}
-    >
-      <View style={styles.modeTop}>
-        <KindIcon kind={kind} size={44} lit={active} glow />
-        <Ionicons
-          name={active ? "checkmark-circle" : "ellipse-outline"}
-          size={20}
-          color={active ? colors.brand : colors.borderStrong}
-        />
-      </View>
-      <Text style={[styles.modeLabel, active && { color: colors.onSurface }]}>{label}</Text>
-      {hint ? <Text style={styles.modeHint}>{hint}</Text> : null}
-    </Pressable>
-  );
-}
-
 const useStyles = makeStyles((colors) => ({
   container: { flex: 1, backgroundColor: colors.surface },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.lg },
-  backLink: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.md },
-  backLinkText: { color: colors.muted, fontFamily: typography.bodyMedium, fontSize: 14 },
-  sectionLabel: { color: colors.muted, fontFamily: typography.bodyBold, fontSize: 11, letterSpacing: 1.6, marginBottom: spacing.xs },
+  content: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.lg },
+  contentCentered: { flexGrow: 1, justifyContent: "center", paddingBottom: spacing.xxxl },
   stepTitle: { color: colors.onSurface, fontFamily: typography.displayBold, fontSize: 28, lineHeight: 34, marginBottom: spacing.lg },
-  modeRow: { flexDirection: "row", gap: spacing.md, marginBottom: spacing.xl },
-  modeCard: {
-    flex: 1, gap: 6, padding: spacing.md, borderRadius: radius.lg,
-    backgroundColor: colors.surfaceSecondary, borderWidth: 1.5, borderColor: colors.border,
+  hintCard: {
+    flexDirection: "row", alignItems: "flex-start", gap: spacing.sm,
+    padding: spacing.md, marginBottom: spacing.lg, borderRadius: radius.lg,
+    backgroundColor: withAlpha(colors.brand, 0.08), borderWidth: 1, borderColor: withAlpha(colors.brand, 0.28),
   },
-  modeTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  modeLabel: { color: colors.onSurfaceSecondary, fontFamily: typography.bodyBold, fontSize: 15, marginTop: 4 },
-  modeHint: { color: colors.brand, fontFamily: typography.bodyMedium, fontSize: 10, letterSpacing: 0.3 },
-  title: { color: colors.onSurface, fontFamily: typography.displayBold, fontSize: 22, lineHeight: 27, marginBottom: spacing.xs },
-  subtitle: { color: colors.muted, fontFamily: typography.body, fontSize: 13, lineHeight: 18, marginBottom: spacing.lg },
+  hintIcon: { marginTop: 2 },
+  hintText: { flex: 1, color: colors.onSurfaceSecondary, fontFamily: typography.body, fontSize: 13, lineHeight: 19 },
   dots: { alignSelf: "center", marginBottom: spacing.md },
   ctaBtn: {
     minHeight: 56, borderRadius: radius.lg, overflow: "hidden",

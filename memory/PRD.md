@@ -492,3 +492,20 @@ Richiesta utente (IT): all'apertura le copertine arrivavano dopo qualche secondo
 - Verifiche: intro PAUSE (montagna/lago) rende; onboarding "What do you want to read?" con icone 3D (bassotto per Animali) OK; /api/media/{id} hero+thumb → 200 WebP; /api/category-media → 200 WebP.
 - Scelte utente confermate: TTS OpenAI e Stripe DISABILITATI; core con Emergent LLM key. Nessuna nuova integrazione a runtime, nessuna generazione AI.
 - Nota peso app: media_cache (48M) e covers (22M) sono cache/asset lato server, NON entrano nell'APK. Il peso installato deriva dalle librerie native. Svuotare la cache non riduce il peso dell'app.
+
+## Sessione — onboarding a fasi + nuove icone 2026 (Sep 2026)
+- Onboarding (`app/onboarding.tsx`, nuovo `src/components/onboarding-modes.tsx`): rimosso il tasto Indietro; 3 puntini di
+  avanzamento nel footer (intro/formati/argomenti), tap su un puntino precedente per tornare indietro (`PagerDots` con `onSelect`).
+  Fase formati: solo le due card Curiosità / Mini lezioni (nessuna preselezionata); al tocco si apre sotto un pannello animato
+  (Reanimated FadeInDown + LinearTransition) con la spiegazione breve del formato; CTA "Continua" attivo con ≥1 formato.
+  Fase argomenti: pillole compatte dei formati (sempre ≥1 attivo), titolo "Cosa ti incuriosisce davvero?", card suggerimento
+  "Scegli gli argomenti… ti proporremo {curiosità|mini lezioni|curiosità e mini lezioni} su misura per te." e griglia categorie
+  con ingresso a cascata (`CategoryGrid staggerIn`). Testi IT/EN in `i18n.tsx` (onb_modes_hint, onb_stories_desc, onb_lessons_desc,
+  onb_modes_next, onb_topics_hint, onb_formats_*).
+- Icone 2026 generate con Gemini Nano Banana (`backend/generate_icons_2026.py`, riferimenti utente in `memory/icons_2026/`):
+  zampa blu lucida = Animali, stella a 4 punte = Qualsiasi argomento, pila di 3 libri = Mini lezioni.
+  Sorgenti versionate nel repo: `backend/category_art/animali.webp`, `all.webp` (`local_overrides` in `category_art_sources_v3.json`,
+  gestite da `calm_category_art.build_assets`). Nuova famiglia `glossy-3d-v4` (manifest aggiornato, migrazione idempotente da v3 in
+  `category_artwork.py`, `restore_category_art.py` supporta v4). Libri → `frontend/assets/images/kind-bulb.png` (KindIcon lessons).
+- Verifica: `test_reports` testing agent — backend 6/6 (`tests/test_iter32_onboarding_categories_media.py`), tutti i flussi onboarding,
+  Home con nuove icone, 390/320px OK. TTS e Stripe restano disabilitati.
