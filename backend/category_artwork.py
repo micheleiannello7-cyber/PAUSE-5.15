@@ -13,6 +13,8 @@ async def ensure_category_artwork(db):
         "pause/category/glass-2026-09-v1/",
         "pause/category/recognizable-2026-09-v2/",
         "pause/category/colorful-3d-v3/",
+        "pause/category/glossy-3d-v4/",
+        "pause/category/glossy-3d-v5/",
     )
     for category_id, path in manifest["artworks"].items():
         fields = {"illustration_generated": path, "illustration_revision": manifest["version"]}

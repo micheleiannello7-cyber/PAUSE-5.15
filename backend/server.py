@@ -1242,6 +1242,17 @@ async def media_for_story(request: Request, story_id: str, size: str = Query("he
     return _image_response(request, path, content, ctype)
 
 
+@api_router.get("/category-media-candidate/{category_id}")
+async def media_candidate_for_category(category_id: str):
+    """Anteprima (revisione) di una nuova famiglia di icone: PNG RGBA locali in
+    category_art/candidates, non ancora pubblicati nell'Object Storage."""
+    safe = "".join(ch for ch in category_id if ch.isalnum() or ch == "-")
+    path = Path(__file__).parent / "category_art" / "candidates" / f"{safe}.png"
+    if not path.is_file():
+        raise HTTPException(404, "No candidate")
+    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "no-cache"})
+
+
 @api_router.get("/category-media/{category_id}")
 async def media_for_category(request: Request, category_id: str, cutout: bool = False, tight: bool = False):
     """Serve the illustration for a category. `cutout=true` returns the object

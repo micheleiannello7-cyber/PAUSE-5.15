@@ -13,10 +13,14 @@ type ArtworkProps = {
   testID: string; wide?: boolean; compact?: boolean; cornerRadius?: number;
   /** Stile "vetro" (onboarding): solo l'oggetto 3D ritagliato, senza piastrella nera, con alone morbido. */
   glass?: boolean;
+  /** Sorgente immagine alternativa (anteprime di nuove famiglie di icone). */
+  uriOverride?: string;
 };
 
 export function CategoryArtwork({ category, ...props }: ArtworkProps) {
-  const uri = props.glass
+  const uri = props.uriOverride
+    ? props.uriOverride
+    : props.glass
     ? categoryArtworkUrl(category.id, category.id === "all" ? ART_VERSION : (category.illustration_generated || ART_VERSION), true)
     : category.id === "all"
       ? categoryArtworkUrl("all", ART_VERSION)
@@ -24,7 +28,7 @@ export function CategoryArtwork({ category, ...props }: ArtworkProps) {
   return <Artwork key={`${CATEGORY_VISUAL_MODE}:${uri}`} category={category} uri={uri} {...props} />;
 }
 
-function Artwork({ category, uri, testID, wide = false, compact = false, cornerRadius = radius.lg, glass = false }: ArtworkProps & { uri: string | null }) {
+function Artwork({ category, uri, testID, wide = false, compact = false, cornerRadius = radius.lg, glass = false }: Omit<ArtworkProps, "uriOverride"> & { uri: string | null }) {
   const styles = useStyles();
   const { colors } = useTheme();
   const [failed, setFailed] = useState(false);

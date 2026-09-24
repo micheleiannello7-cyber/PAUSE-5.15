@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--reupload", action="store_true", help="Restore a fresh bucket without probing missing objects")
     args = parser.parse_args()
     manifest = json.loads((ROOT / "category_art_manifest.json").read_text())
-    if manifest["version"] in ("colorful-3d-v3", "glossy-3d-v4"):
+    if manifest["version"] in ("colorful-3d-v3", "glossy-3d-v4", "glossy-3d-v5"):
         # Recreate the approved bytes from managed source images; never request
         # another AI generation or probe an empty fork bucket for every object.
         from calm_category_art import build_assets

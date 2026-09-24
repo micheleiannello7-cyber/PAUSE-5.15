@@ -18,6 +18,9 @@ load_dotenv(ROOT / ".env")
 
 from storage import put_object  # noqa: E402
 
+# Lato maggiore dell'oggetto rispetto al riquadro (uguale per tutte le icone).
+OBJECT_FRACTION = 0.6
+
 
 def read_image(url: str) -> Image.Image:
     response = requests.get(url, timeout=60)
@@ -31,10 +34,24 @@ def encode_icon(image: Image.Image) -> bytes:
     corners = [image.getpixel((x, y)) for x in (2, image.width - 3) for y in (2, image.height - 3)]
     background = tuple(int(median(c[channel] for c in corners)) for channel in range(3))
     image = ImageChops.subtract(image, Image.new("RGB", image.size, background))
+    # Azzera il rumore residuo dello sfondo (gradienti JPEG) così il riquadro
+    # è uniforme anche quando l'oggetto viene ricentrato su una tela più grande.
+    import numpy as np
+    arr = np.asarray(image).astype(np.float32)
+    lum = arr.max(axis=2, keepdims=True)
+    keep = np.clip((lum - 12.0) / 22.0, 0.0, 1.0)
+    arr = arr * keep
+    image = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     image = ImageChops.add(image, Image.new("RGB", image.size, (5, 7, 12)))
-    size = max(image.size)
-    square = Image.new("RGB", (size, size), (5, 7, 12))
-    square.paste(image, ((size - image.width) // 2, (size - image.height) // 2))
+    # Normalizza posizione e scala: l'oggetto viene centrato e occupa sempre la
+    # stessa frazione del riquadro (stessa dimensione visiva in tutte le tessere).
+    mask = image.convert("L").point(lambda v: 255 if v > 70 else 0)
+    bbox = mask.getbbox() or (0, 0, image.width, image.height)
+    obj_w, obj_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    side = int(round(max(obj_w, obj_h) / OBJECT_FRACTION))
+    cx, cy = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+    square = Image.new("RGB", (side, side), (5, 7, 12))
+    square.paste(image, (int(round(side / 2 - cx)), int(round(side / 2 - cy))))
     square.thumbnail((512, 512), Image.Resampling.LANCZOS)
     encoded = io.BytesIO()
     square.save(encoded, "WEBP", quality=90, method=6)
@@ -48,8 +65,10 @@ def build_assets() -> tuple[str, dict[str, bytes]]:
     assets = {}
     for index, category_id in enumerate(config["order"]):
         col, row = index % cols, index // cols
-        bounds = (round(col * sheet.width / cols), round(row * sheet.height / rows),
-                  round((col + 1) * sheet.width / cols), round((row + 1) * sheet.height / rows))
+        cell_w, cell_h = sheet.width / cols, sheet.height / rows
+        inset = round(min(cell_w, cell_h) * 0.03)  # evita le linee di separazione del foglio
+        bounds = (round(col * cell_w) + inset, round(row * cell_h) + inset,
+                  round((col + 1) * cell_w) - inset, round((row + 1) * cell_h) - inset)
         assets[category_id] = encode_icon(sheet.crop(bounds))
     assets["all"] = encode_icon(read_image(config["all_url"]))
     for category_id, url in config.get("overrides", {}).items():

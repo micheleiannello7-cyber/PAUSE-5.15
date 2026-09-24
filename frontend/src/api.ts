@@ -1,6 +1,6 @@
 // PAUSE — API client. Uses Expo config with the public env fallback.
 import Constants from "expo-constants";
-const BASE = Constants.expoConfig?.extra?.backendUrl ?? process.env.EXPO_PUBLIC_BACKEND_URL;
+export const BASE = Constants.expoConfig?.extra?.backendUrl ?? process.env.EXPO_PUBLIC_BACKEND_URL;
 if (!BASE) {
   // Fail loudly at startup instead of producing "undefined/api/..." requests
   // that surface as a generic network error much later.
